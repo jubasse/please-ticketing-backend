@@ -1,5 +1,49 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src"
+  "sourceRoot": "apps/please-ticketing-backend/src",
+  "monorepo": true,
+  "root": "apps/please-ticketing-backend",
+  "compilerOptions": {
+    "webpack": true,
+    "tsConfigPath": "apps/please-ticketing-backend/tsconfig.app.json"
+  },
+  "projects": {
+    "please-ticketing-backend": {
+      "type": "application",
+      "root": "apps/please-ticketing-backend",
+      "entryFile": "main",
+      "sourceRoot": "apps/please-ticketing-backend/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/please-ticketing-backend/tsconfig.app.json"
+      }
+    },
+    "auth": {
+      "type": "application",
+      "root": "apps/auth",
+      "entryFile": "main",
+      "sourceRoot": "apps/auth/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/auth/tsconfig.app.json"
+      }
+    },
+    "user": {
+      "type": "application",
+      "root": "apps/user",
+      "entryFile": "main",
+      "sourceRoot": "apps/user/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/user/tsconfig.app.json"
+      }
+    },
+    "ticket": {
+      "type": "application",
+      "root": "apps/ticket",
+      "entryFile": "main",
+      "sourceRoot": "apps/ticket/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/ticket/tsconfig.app.json"
+      }
+    }
+  }
 }
