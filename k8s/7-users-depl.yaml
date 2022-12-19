@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: users-ticketing-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ticketing-users
+  template:
+    metadata:
+      labels:
+        app: ticketing-users
+    spec:
+      containers:
+        - name: ticketing-users
+          image: jubasse/ticketing-users
+          env:
+            - name: MONGO_URI
+              value: 'mongodb://ticketing-users-mongo-srv:27017/user'
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticketing-users
+spec:
+  selector:
+    app: ticketing-users
+  ports:
+    - name: ticketing-users
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
