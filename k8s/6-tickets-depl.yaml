@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticketing-tickets-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ticketing-tickets
+  template:
+    metadata:
+      labels:
+        app: ticketing-tickets
+    spec:
+      containers:
+        - name: ticketing-tickets
+          image: jubasse/ticketing-tickets
+          env:
+            - name: MONGO_URI
+              value: 'mongodb://ticketing-tickets-mongo-srv:27017/tickets'
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticketing-tickets
+spec:
+  selector:
+    app: ticketing-tickets
+  ports:
+    - name: ticketing-ticket
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

@@ -1,0 +1,135 @@
+version: "3"
+networks:
+  ticketing.io:
+    driver: bridge
+services:
+  user:
+    build: ./user
+    networks:
+      - ticketing.io
+    ports:
+      - 8992:8080
+    environment:
+      DB_HOST: mongo
+      PAYMENT_HOST: payment
+      ORDER_HOST: order
+    links:
+      - mongo_user
+    depends_on:
+      - mongo_user
+    restart: always
+  auth:
+    build: ./auth
+    networks:
+      - ticketing.io
+    ports:
+      - 8993:8080
+    environment:
+      DB_HOST: mongo
+      PAYMENT_HOST: payment
+      ORDER_HOST: order
+    links:
+      - mongo_auth
+    depends_on:
+      - mongo_auth
+    restart: always
+  ticket:
+    build: ./ticket
+    networks:
+      - ticketing.io
+    ports:
+      - 8994:8080
+    environment:
+      DB_HOST: mongo
+      PAYMENT_HOST: payment
+      ORDER_HOST: order
+    links:
+      - mongo_ticket
+    depends_on:
+      - mongo_ticket
+    restart: always
+  mongo_user:
+    image: mongo
+    hostname: mongo_user
+    container_name: ticketing_mongo_user
+    networks:
+      - ticketing.io
+    ports:
+      - 27028:27017
+    restart: always
+  mongo_auth:
+    image: mongo
+    hostname: mongo_auth
+    container_name: ticketing_mongo_auth
+    networks:
+      - ticketing.io
+    ports:
+      - 27029:27017
+    restart: always
+  mongo_ticket:
+    image: mongo
+    hostname: mongo_ticket
+    container_name: ticketing_mongo_ticket
+    networks:
+      - ticketing.io
+    ports:
+      - 27030:27017
+    restart: always
+  zookeeper:
+    image: zookeeper
+    container_name: ticketing_zookeeper
+    hostname: zookeeper
+    networks:
+      - ticketing.io
+    ports:
+      - 2181:2181
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: yes
+    volumes:
+      - ./data/zookeeper/data:/data
+      - ./data/zookeeper/datalog:/datalog
+  kafka:
+    image: bitnami/kafka:2.8.1
+    hostname: kafka
+    container_name: ticketing_kafka
+    networks:
+      - ticketing.io
+    ports:
+      - 9092:9092
+      - 9101:9101
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka:29092
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    depends_on:
+      - zookeeper
+    restart: always
+  kafka-ui:
+    container_name: ticketing_kafka_ui
+    image: provectuslabs/kafka-ui:latest
+    networks:
+      - ticketing.io
+    ports:
+      - 9093:8080
+    depends_on:
+      - kafka
+      - zookeeper
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      KAFKA_CLUSTERS_0_READONLY: true

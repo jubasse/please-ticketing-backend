@@ -1,0 +1,46 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: ticketing-zookeeper-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ticketing-zookeeper
+  template:
+    metadata:
+      labels:
+        app: ticketing-zookeeper
+    spec:
+      containers:
+      - name: ticketing-zookeeper
+        image: bitnami/zookeeper:latest
+        ports:
+        - containerPort: 2181
+        env:
+        - name: ZOOKEEPER_SERVER_1
+          value: ticketing-zookeeper
+        - name: ZOO_ENABLE_AUTH
+          value: "no"
+        - name: ALLOW_ANONYMOUS_LOGIN
+          value: "yes"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticketing-zookeeper-svc
+  labels:
+    app: ticketing-zookeeper
+spec:
+  ports:
+  - name: client
+    port: 2181
+    protocol: TCP
+  - name: follower
+    port: 2888
+    protocol: TCP
+  - name: leader
+    port: 3888
+    protocol: TCP
+  selector:
+    app: ticketing-zookeeper
