@@ -1,0 +1,121 @@
+version: "3"
+networks:
+  ticketing.dev:
+    driver: bridge
+services:
+  ticketing_reverse_proxy:
+    container_name: ticketing_reverse_proxy
+    image: nginx
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/logs:/var/logs/nginx
+    networks:
+      - ticketing.dev
+    ports:
+      - 8080:80
+    depends_on:
+      - ticketing_users
+      - ticketing_tickets
+      - ticketing_auth
+    links:
+      - ticketing_users
+      - ticketing_tickets
+      - ticketing_auth
+      - ticketing_nats
+  ticketing_users:
+    container_name: ticketing_users
+    build:
+      context: .
+      dockerfile: ./apps/users/Dockerfile
+    networks:
+      - ticketing.dev
+    ports:
+      - 8992:3000
+    environment:
+      DB_HOST: ticketing_users_mongo
+    links:
+      - ticketing_users_mongo
+      - ticketing_nats
+    depends_on:
+      - ticketing_users_mongo
+      - ticketing_nats
+    restart: always
+  ticketing_tickets:
+    container_name: ticketing_tickets
+    build:
+      context: .
+      dockerfile: ./apps/tickets/Dockerfile
+    networks:
+      - ticketing.dev
+    ports:
+      - 8993:3000
+    environment:
+      DB_HOST: ticketing_tickets_mongo
+    links:
+      - ticketing_tickets_mongo
+      - ticketing_nats
+    depends_on:
+      - ticketing_tickets_mongo
+      - ticketing_nats
+    restart: always
+  ticketing_auth:
+    container_name: ticketing_auth
+    build:
+      context: .
+      dockerfile: ./apps/auth/Dockerfile
+    networks:
+      - ticketing.dev
+    ports:
+      - 8994:3000
+    environment:
+      DB_HOST: ticketing_auth_mongo
+    links:
+      - ticketing_auth_mongo
+      - ticketing_nats
+    depends_on:
+      - ticketing_auth_mongo
+      - ticketing_nats
+    restart: always
+  ticketing_users_mongo:
+    image: mongo
+    hostname: ticketing_users_mongo
+    container_name: ticketing_users_mongo
+    networks:
+      - ticketing.dev
+    ports:
+      - 27017:27017
+    restart: always
+  ticketing_tickets_mongo:
+    image: mongo
+    hostname: ticketing_tickets_mongo
+    container_name: ticketing_tickets_mongo
+    networks:
+      - ticketing.dev
+    ports:
+      - 27018:27017
+    restart: always
+  ticketing_auth_mongo:
+    image: mongo
+    hostname: ticketing_auth_mongo
+    container_name: ticketing_auth_mongo
+    networks:
+      - ticketing.dev
+    ports:
+      - 27019:27017
+    restart: always
+  ticketing_nats:
+    image: nats-streaming:latest
+    command:
+      - "--cluster_id=ticketing_nats_cluster"
+      - "--port=4222"
+      - "--http_port=8222"
+      - "--stan_debug"
+      - "--hb_interval=5s"
+      - "--hb_timeout=5s"
+    hostname: ticketing_nats
+    container_name: ticketing_nats
+    networks:
+      - ticketing.dev
+    ports:
+      - 4222:4222
+      - 8222:8222
