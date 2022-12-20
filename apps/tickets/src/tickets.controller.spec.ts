@@ -14,9 +14,4 @@ describe('TicketsController', () => {
     ticketsController = app.get<TicketsController>(TicketsController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(ticketsController.getHello()).toBe('Hello World!');
-    });
-  });
 });
